@@ -1,0 +1,23 @@
+namespace: pharos-testnet
+nameOverride: ""
+
+image:
+  repository: public.ecr.aws/k2g7b7g1/pharos/testnet
+  tag: "rpc_community_0629"
+  pullPolicy: IfNotPresent
+
+resources:
+  requests:
+    cpu: "8"
+    memory: "16Gi"
+  limits:
+    cpu: "16"
+    memory: "32Gi"
+
+persistence:
+  storageClass: "standard"
+  accessModes:
+    - ReadWriteOnce
+  size: 2000Gi
+
+customLabels: {}
