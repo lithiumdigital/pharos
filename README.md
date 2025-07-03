@@ -33,7 +33,7 @@ This Helm chart deploys the Pharos testnet using a Kubernetes StatefulSet and Se
 
    ```sh
    git clone <repo-url>
-   cd pharos-testnet-chart
+   cd pharos
    ```
 
 2. **Customize your deployment:**
