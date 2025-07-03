@@ -1,0 +1,54 @@
+{{- if .Values.snapshot.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pharos-snapshot
+  namespace: {{ include "pharos.namespace" $ | quote }}
+  labels:
+    app: pharos-snapshot
+spec:
+  template:
+    metadata:
+      labels:
+        app: pharos-snapshot
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: snapshot-helper
+        image: ubuntu:latest
+        env:
+        - name: SNAPSHOT_URL
+          value: "{{ .Values.snapshot.url }}"
+        - name: DATA_DIR
+          value: "{{ .Values.snapshot.dataDir }}"
+        command:
+        - /bin/bash
+        - -c
+        - |
+          set -e
+          apt-get update
+          apt-get install -y wget tar gzip
+          echo "Downloading snapshot..."
+          wget "$SNAPSHOT_URL" -O snapshot.tar.gz
+          echo "Extracting snapshot..."
+          tar -zxvf snapshot.tar.gz
+          echo "Replacing data directory..."
+          rm -rf "$DATA_DIR"
+          mv public "$DATA_DIR"
+          echo "Snapshot initialization complete. Job will now exit."
+        volumeMounts:
+        - name: pharos-data
+          mountPath: /data
+        resources:
+          requests:
+            memory: "8Gi"
+            cpu: "2"
+          limits:
+            memory: "16Gi"
+            cpu: "4"
+      volumes:
+      - name: pharos-data
+        persistentVolumeClaim:
+          claimName: pharos-data-{{ include "pharos.name" $ | lower }}-0
+      terminationGracePeriodSeconds: 30
+{{- end }}

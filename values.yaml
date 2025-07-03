@@ -1,5 +1,9 @@
 namespace: pharos-testnet
 nameOverride: ""
+namespaceOverride: ""
+
+network:
+  type: testnet
 
 image:
   repository: public.ecr.aws/k2g7b7g1/pharos/testnet
@@ -19,5 +23,10 @@ persistence:
   accessModes:
     - ReadWriteOnce
   size: 2000Gi
+
+snapshot:
+  url: "https://snapshot.dplabs-internal.com/testnet/snapshot-2025-05-27-03-13.tar.gz"
+  dataDir: "/data/pharos-node/domain/light/data/public"
+  enabled: false
 
 customLabels: {}

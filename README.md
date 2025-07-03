@@ -13,6 +13,7 @@ This Helm chart deploys the Pharos testnet using a Kubernetes StatefulSet and Se
 - [Configuration](#configuration)
   - [Parameters](#parameters)
 - [Usage](#usage)
+- [Snapshot Job (Restore from Snapshot)](#snapshot-job-restore-from-snapshot)
 - [Template Structure](#template-structure)
 - [Contributing](#contributing)
 - [License](#license)
@@ -91,6 +92,9 @@ All configurable parameters are defined in values.yaml. You can override any val
 | `persistence.accessModes`       | Access modes for persistent volume                  | `[ReadWriteOnce]`                            |
 | `persistence.size`              | Size of the persistent volume                       | `2000Gi`                                     |
 | `customLabels`                  | Additional custom labels for resources              | `{}`                                         |
+| `snapshot.enabled`              | Enable the snapshot restore job (Helm hook)         | `false`                                      |
+| `snapshot.url`                  | URL to the snapshot archive                         | `""`                                         |
+| `snapshot.dataDir`              | Path to the data directory inside the container     | `/data/pharos-node/domain/light/data/public`  |
 
 ---
 
@@ -116,10 +120,86 @@ All configurable parameters are defined in values.yaml. You can override any val
 
 ---
 
+## Snapshot Job (Restore from Snapshot)
+
+This chart supports restoring blockchain data from a snapshot using a Kubernetes Job. The snapshot restore is performed by a Job that you can enable or disable via values. **You must manually control when the snapshot Job runs to avoid conflicts with the main StatefulSet.**
+
+### How it works
+
+- The snapshot Job is only created if `snapshot.enabled=true`.
+- The Job passes the snapshot URL and data directory directly as environment variables from `values.yaml`.
+- The Job will mount the same PVC as the main StatefulSet, so you must ensure the main pod is **not running** before running the snapshot job.
+
+### Steps to Restore from Snapshot
+
+1. **Scale down the main StatefulSet and wait for the pod to terminate:**
+
+   ```sh
+   kubectl scale statefulset <release-name> --replicas=0 -n <namespace>
+   kubectl get pods -l app.kubernetes.io/instance=<release-name> -n <namespace>
+   # Wait until no pods are running
+   ```
+
+2. **Edit `values.yaml` or use `--set` to enable the snapshot job and set the snapshot URL:**
+
+   ```yaml
+   snapshot:
+     enabled: true
+     url: "https://your-snapshot-url/snapshot.tar.gz"
+     dataDir: "/data/pharos-node/domain/light/data/public"
+   ```
+
+   Or via CLI:
+
+   ```sh
+   helm upgrade --install <release-name> . \
+     --set snapshot.enabled=true \
+     --set snapshot.url="https://your-snapshot-url/snapshot.tar.gz" \
+     --set snapshot.dataDir="/data/pharos-node/domain/light/data/public"
+   ```
+
+3. **Upgrade or install the chart:**
+
+   ```sh
+   helm upgrade --install <release-name> .
+   ```
+
+   The snapshot Job will be created and run alongside other resources.  
+   **Ensure the main StatefulSet is scaled down before this step.**
+
+4. **After the Job completes, disable the snapshot job:**
+
+   ```sh
+   helm upgrade <release-name> . --set snapshot.enabled=false
+   ```
+
+5. **Scale the main StatefulSet back up:**
+
+   ```sh
+   kubectl scale statefulset <release-name> --replicas=1 -n <namespace>
+   ```
+
+### Passing Snapshot Values
+
+The snapshot Job now receives its configuration directly from `values.yaml` via environment variables:
+
+```yaml
+env:
+  - name: SNAPSHOT_URL
+    value: "{{ .Values.snapshot.url }}"
+  - name: DATA_DIR
+    value: "{{ .Values.snapshot.dataDir }}"
+```
+
+You can customize the snapshot URL and data directory via `values.yaml` or `--set` as shown above.
+
+---
+
 ## Template Structure
 
 - statefulset.yaml: Defines the main Pharos node StatefulSet, including container image, ports, resources, and persistent storage.
 - service.yaml: Exposes the Pharos node via a Kubernetes Service.
+- snapshot/snapshot_job.yaml: Defines the snapshot restore Job, passing values directly as environment variables.
 - _helpers.tpl: Contains helper template functions for consistent naming and labeling.
 
 ---
@@ -149,6 +229,11 @@ persistence:
   size: 2000Gi
 
 customLabels: {}
+
+snapshot:
+  enabled: false
+  url: ""
+  dataDir: "/data/pharos-node/domain/light/data/public"
 ```
 
 ---

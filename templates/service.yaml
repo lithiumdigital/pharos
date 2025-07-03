@@ -1,8 +1,8 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "pharos.testnet.name" $ | lower }}
-  namespace: {{ include "pharos.testnet.namespace" $ | quote }}
+  name: {{ include "pharos.name" $ | lower }}
+  namespace: {{ include "pharos.namespace" $ | quote }}
 spec:
   type: ClusterIP
   ports:
@@ -16,4 +16,4 @@ spec:
       targetPort: internal-service
       name: internal-service
   selector:
-    {{- include "pharos.testnet.labels.standard" ( dict "customLabels" .Values.customLabels "context" $ ) | nindent 7 }}
+    {{- include "pharos.labels.standard" ( dict "customLabels" .Values.customLabels "context" $ ) | nindent 7 }}
