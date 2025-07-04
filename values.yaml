@@ -1,5 +1,5 @@
 nameOverride: ""
-namespaceOverride: "uche-demo-workspace"
+namespaceOverride: ""
 
 network:
   type: testnet

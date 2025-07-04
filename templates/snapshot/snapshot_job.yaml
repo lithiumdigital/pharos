@@ -16,6 +16,7 @@ spec:
       containers:
       - name: snapshot-helper
         image: ubuntu:latest
+        workingDir: /data
         env:
         - name: SNAPSHOT_URL
           value: "{{ .Values.snapshot.url }}"

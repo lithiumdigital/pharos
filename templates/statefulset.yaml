@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: {{ include "pharos.name" $ | lower }}
-  namespace: {{ include "pharos.namespace" $ | quote }}
+  namespace: "pharos-{{ include "pharos.namespace" $ }}"
 spec:
   serviceName: "{{ include "pharos.name" $ | lower }}"
   replicas: {{- if .Values.snapshot.enabled }} 0 {{- else }} 1 {{- end }}
