@@ -132,15 +132,7 @@ This chart supports restoring blockchain data from a snapshot using a Kubernetes
 
 ### Steps to Restore from Snapshot
 
-1. **Scale down the main StatefulSet and wait for the pod to terminate:**
-
-   ```sh
-   kubectl scale statefulset <release-name> --replicas=0 -n <namespace>
-   kubectl get pods -l app.kubernetes.io/instance=<release-name> -n <namespace>
-   # Wait until no pods are running
-   ```
-
-2. **Edit `values.yaml` or use `--set` to enable the snapshot job and set the snapshot URL:**
+1. **Edit `values.yaml` or use `--set` to enable the snapshot job and set the snapshot URL:**
 
    ```yaml
    snapshot:
@@ -158,22 +150,23 @@ This chart supports restoring blockchain data from a snapshot using a Kubernetes
      --set snapshot.dataDir="/data/pharos-node/domain/light/data/public"
    ```
 
-3. **Upgrade or install the chart:**
+2. **Upgrade or install the chart:**
 
    ```sh
    helm upgrade --install <release-name> .
    ```
 
    The snapshot Job will be created and run alongside other resources.  
-   **Ensure the main StatefulSet is scaled down before this step.**
+   **Setting snapshot.enabled=true scales down the pharos-node StatefulSet to 0 replicas.**
 
-4. **After the Job completes, disable the snapshot job:**
+3. **After the Job completes, disable the snapshot job:**
 
    ```sh
    helm upgrade <release-name> . --set snapshot.enabled=false
    ```
+    This will remove the snapshot Job and scale the main StatefulSet back up.
 
-5. **Scale the main StatefulSet back up:**
+4. **You can manually scale the main StatefulSet back up:**
 
    ```sh
    kubectl scale statefulset <release-name> --replicas=1 -n <namespace>
@@ -192,6 +185,24 @@ env:
 ```
 
 You can customize the snapshot URL and data directory via `values.yaml` or `--set` as shown above.
+
+---
+
+### Uninstalling the Snapshot Job and All Resources
+
+To remove the snapshot job and all resources created by this chart, run:
+
+```sh
+helm uninstall <release-name> -n <namespace>
+```
+
+This command deletes the release and all associated Kubernetes resources, including the StatefulSet, Services, PVCs, and Jobs.  
+If you want to keep the persistent data, manually delete the PVC after uninstalling the chart if needed:
+
+```sh
+kubectl delete pvc -l app.kubernetes.io/instance=<release-name> -n <namespace>
+```
+
 
 ---
 

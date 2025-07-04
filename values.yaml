@@ -1,6 +1,5 @@
-namespace: pharos-testnet
 nameOverride: ""
-namespaceOverride: ""
+namespaceOverride: "uche-demo-workspace"
 
 network:
   type: testnet
@@ -19,14 +18,27 @@ resources:
     memory: "32Gi"
 
 persistence:
-  storageClass: "standard"
+  storageClass: "default"
   accessModes:
     - ReadWriteOnce
-  size: 2000Gi
+  size: 1000Gi
 
 snapshot:
-  url: "https://snapshot.dplabs-internal.com/testnet/snapshot-2025-05-27-03-13.tar.gz"
+  url: "https://snapshot.dplabs-internal.com/testnet/snapshot-2025-06-24-03-17.tar.gz"
   dataDir: "/data/pharos-node/domain/light/data/public"
   enabled: false
+
+taints:
+  enabled: false  # Set to false to disable taints
+  key: "reserved"  # The taint key to tolerate
+  operator: "Equal" # Optional: Can be "Exists" or "Equal" (defaults to "Exists") 
+  value: "alpha"  # The taint value (only needed with Equal operator)
+  effect: "NoSchedule"  # Can be NoSchedule, PreferNoSchedule, or NoExecute
+
+# Node selector configuration
+  # Example:
+  # kubernetes.io/hostname: my-node.hostname
+nodeSelector:
+  kubernetes.io/hostname: shango-worker8.lithiumdigital.com
 
 customLabels: {}

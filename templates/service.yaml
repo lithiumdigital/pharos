@@ -13,7 +13,7 @@ spec:
       targetPort: p2p
       name: p2p
     - port: 19000
-      targetPort: internal-service
-      name: internal-service
+      targetPort: internal
+      name: internal
   selector:
     {{- include "pharos.labels.standard" ( dict "customLabels" .Values.customLabels "context" $ ) | nindent 7 }}
