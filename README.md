@@ -122,7 +122,7 @@ All configurable parameters are defined in values.yaml. You can override any val
 | `taints.operator`               | Taint operator (`Equal`, `Exists`)                          | `Equal`                                      |
 | `taints.value`                  | Taint value                                                  | `alpha`                                      |
 | `taints.effect`                 | Taint effect (`NoSchedule`, etc.)                           | `NoSchedule`                                 |
-| `nodeSelector`                  | Node selector to schedule pods on specific nodes            | `{ kubernetes.io/hostname: shango-worker7.lithiumdigital.com }` |
+| `nodeSelector`                  | Node selector to schedule pods on specific nodes            | `{ kubernetes.io/hostname: mynode.name.com }` |
 | `gateway.enabled`               | Enable Envoy Gateway configuration                          | `false`                                      |
 | `gateway.controllerName`        | Controller name for the gateway                             | `gateway.envoyproxy.io/gatewayclass-controller` |
 | `gateway.className`             | Gateway class name                                          | `envoy`                                      |

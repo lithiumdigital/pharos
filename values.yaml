@@ -51,7 +51,7 @@ taints:
   # Example:
   # kubernetes.io/hostname: my-node.hostname
 nodeSelector:
-  kubernetes.io/hostname: shango-worker7.lithiumdigital.com
+  kubernetes.io/hostname: mynode.name.com
 
 customLabels: {}
 
