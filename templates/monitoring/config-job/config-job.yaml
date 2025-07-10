@@ -1,0 +1,75 @@
+{{- if .Values.monitoring.enabled }}
+{{- $defaultURL := printf "pushgateway-svc-%s" (include "pharos.name" $) }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pharos-monitoring-config
+  namespace: {{ include "pharos.namespace" . | quote }}
+  labels:
+    app: pharos-monitoring-config
+spec:
+  template:
+    metadata:
+      labels:
+        app: pharos-monitoring-config
+    spec:
+      restartPolicy: Never
+      {{- if .Values.taints }}
+      {{- if .Values.taints.enabled }}
+      tolerations:
+      - key: {{ .Values.taints.key }}
+        operator: {{ .Values.taints.operator | default "Exists" }}
+        {{- if .Values.taints.value }}
+        value: {{ .Values.taints.value }}
+        {{- end }}
+        effect: {{ .Values.taints.effect | default "NoSchedule" }}
+      {{- end }}
+      {{- end }}
+      {{- if .Values.nodeSelector }}
+      nodeSelector:
+        {{- include "pharos.tplvalues.render" ( dict "value" .Values.nodeSelector "context" . ) | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: monitoring-configurator
+          image: ubuntu:latest
+          workingDir: /data
+          command:
+            - /bin/bash
+            - -c
+            - |
+              set -e
+              apt-get update
+              apt-get install -y jq
+
+              MONITOR_FILE="$MONITOR_CONF_PATH"
+              echo "Configuring monitoring in $MONITOR_FILE"
+
+              cat <<EOF > "$MONITOR_FILE"
+              {
+                "enable_pamir_cetina": true,
+                "pamir_cetina_push_address": "{{ default $defaultURL .Values.monitoring.pushGatewayAddress }}",
+                "pamir_cetina_push_port": {{ default 9091 .Values.pushGateway.service.port }},
+                "pamir_cetina_push_interval_second": {{ .Values.monitoring.pushInterval }},
+                "pamir_cetina_job_name": "{{ include "pharos.name" $ | lower }}"
+              }
+              EOF
+
+              echo "Monitoring config applied."
+          env:
+            - name: MONITOR_CONF_PATH
+              value: "{{ .Values.monitoring.confPath }}"
+          volumeMounts:
+            - name: pharos-data
+              mountPath: /data
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "250m"
+      volumes:
+        - name: pharos-data
+          persistentVolumeClaim:
+            claimName: pharos-data-{{ include "pharos.name" . | lower }}-0
+{{- end }}

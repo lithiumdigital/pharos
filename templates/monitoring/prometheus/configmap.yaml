@@ -1,0 +1,89 @@
+{{ if .Values.prometheus.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "prometheus-config-{{ include "pharos.name" $ }}"
+  namespace: {{ include "pharos.namespace" $ | quote }}
+data:
+  prometheus.yaml: |-
+    ---
+    # global settings
+    global:
+      scrape_interval: {{ .Values.prometheus.scrapeInterval | default "15s" }} # Default scrape interval
+      evaluation_interval: {{ .Values.prometheus.evaluationInterval | default "60s" }} # Default evaluation interval
+  
+    alerting:
+      alertmanagers:
+      {{- toYaml .Values.prometheus.alertmanagers | nindent 8 }}
+
+    scrape_configs:
+    {{- range .Values.prometheus.scrapeConfigs }}
+      - job_name: {{ .job_name | quote }}
+        {{- if .metrics_path }}
+        metrics_path: {{ .metrics_path | quote }}
+        {{- end }}
+        static_configs:
+        {{- range .static_configs }}
+          - targets:
+            {{- range .targets }}
+              - {{ . | quote }}
+            {{- end }}
+            {{- if .labels }}
+            labels:
+              {{- range $key, $val := .labels }}
+              {{ $key }}: {{ $val | quote }}
+              {{- end }}
+            {{- end }}
+        {{- end }}
+    {{- end }}
+
+
+    # Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+    rule_files:
+      - /etc/prometheus/rules/pharos.yaml
+
+
+  pharos.yaml: |
+    groups:
+      - name: node-sync.rules
+        rules:
+        - alert: NodeNotSyncing
+          expr: rate(synced_block_number[5m]) == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Node is not syncing ({{`{{ $labels.instance }}` }})"
+            description: "The synced block number has not increased for 5 minutes on {{`{{ $labels.instance }}`}}."
+
+        - alert: TargetBlockNotUpdating
+          expr: rate(target_block_number[5m]) == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Target block is not updating ({{`{{ $labels.instance }}`}})"
+            description: "The target block number has not changed in the last 5 minutes on {{`{{ $labels.instance }}`}}. Node may be offline or disconnected."
+
+        - alert: NodeSyncLag
+          expr: target_block_number - synced_block_number > 1000
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Node sync lag is high ({{`{{ $labels.instance }}`}})"
+            description: "Sync lag is greater than 1000 blocks for more than 5 minutes."
+
+        - alert: BlockExecutionQueueHigh
+          expr: block_execute_queue > 100
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Block execution queue is high ({{`{{ $labels.instance }}`}})"
+            description: "More than 100 blocks are waiting in the execution queue."
+{{ if .Values.prometheus.alertingRules }}
+{{ toYaml .Values.prometheus.alertingRules | indent 8 }}
+{{- end }}
+{{ end }}

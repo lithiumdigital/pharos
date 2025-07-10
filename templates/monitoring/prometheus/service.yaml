@@ -1,0 +1,14 @@
+{{ if .Values.prometheus.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: "prometheus-svc-{{ include "pharos.name" $ }}"
+  namespace: {{ include "pharos.namespace" $ | quote }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.prometheus.service.port }}
+      targetPort: {{ .Values.prometheus.service.port }}
+  selector:
+    {{- include "pharos.labels.standard" ( dict "customLabels" $.Values.prometheus.customLabels "context" $ ) | nindent 9 }}
+{{ end }}

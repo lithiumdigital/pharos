@@ -1,0 +1,90 @@
+{{ if .Values.grafana.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "grafana-{{ include "pharos.name" $ }}"
+  namespace: {{ include "pharos.namespace" $ | quote }}
+  labels:
+    {{- include "pharos.labels.standard" ( dict "customLabels" $.Values.grafana.customLabels "context" $ ) | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+    {{- include "pharos.labels.standard" ( dict "customLabels" $.Values.grafana.customLabels "context" $ ) | nindent 6 }}
+  template:
+    metadata:
+      labels:
+    {{- include "pharos.labels.standard" ( dict "customLabels" $.Values.grafana.customLabels "context" $ ) | nindent 8 }}
+    spec:
+      {{- if .Values.taints }}
+      {{- if .Values.taints.enabled }}
+      tolerations:
+      - key: {{ .Values.taints.key }}
+        operator: {{ .Values.taints.operator | default "Exists" }}
+        {{- if .Values.taints.value }}
+        value: {{ .Values.taints.value }}
+        {{- end }}
+        effect: {{ .Values.taints.effect | default "NoSchedule" }}
+      {{- end }}
+      {{- end }}
+        {{- if .Values.nodeSelector }}
+      nodeSelector:
+        {{- include "pharos.tplvalues.render" ( dict "value" .Values.nodeSelector "context" $ ) | nindent 8 }}
+        {{- end }}
+      securityContext:
+        fsGroup: 472
+      containers:
+        - name: grafana
+          image: {{ .Values.grafana.image.repository }}:{{ .Values.grafana.image.tag }}
+          imagePullPolicy: {{ .Values.grafana.image.pullPolicy | default "IfNotPresent" }}
+          resources:
+            limits:
+              cpu: {{ .Values.grafana.resources.limits.cpu | default "500m" }}
+              memory: {{ .Values.grafana.resources.limits.memory | default "512Mi" }}
+            requests:
+              cpu: {{ .Values.grafana.resources.requests.cpu | default "100m" }}
+              memory: {{ .Values.grafana.resources.requests.memory | default "128Mi" }} 
+          ports:
+            - containerPort: {{ .Values.grafana.service.port }}
+          env:
+            - name: GF_SECURITY_ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-secrets-{{ include "pharos.name" $ }}
+                  key: GF_SECURITY_ADMIN_USER
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-secrets-{{ include "pharos.name" $ }}
+                  key: GF_SECURITY_ADMIN_PASSWORD
+            - name: GF_METRICS_ENABLED
+              value: {{ .Values.grafana.config.GF_METRICS_ENABLED | default "false" | quote }}
+            - name: GF_USERS_DEFAULT_THEME
+              value: {{ .Values.grafana.config.GF_USERS_DEFAULT_THEME | default "dark" }}
+            - name: GF_SECURITY_DISABLE_BRUTE_FORCE_LOGIN_PROTECTION
+              value: {{ .Values.grafana.config.GF_SECURITY_DISABLE_BRUTE_FORCE_LOGIN_PROTECTION | default "true" | quote }}
+            - name: GF_USERS_ALLOW_SIGN_UP
+              value: {{ .Values.grafana.config.GF_USERS_ALLOW_SIGN_UP | default "false" | quote }}
+          volumeMounts:
+            - name: grafana-storage
+              mountPath: /var/lib/grafana
+            - name: dashboard-json
+              mountPath: /etc/grafana/provisioning/dashboards/pharos
+              readOnly: true
+            - name: grafana-config
+              mountPath: /etc/grafana/provisioning/dashboards/dashboard.yaml
+              subPath: dashboard.yaml
+            - name: grafana-config
+              mountPath: /etc/grafana/provisioning/datasources/datasources.yaml
+              subPath: datasources.yaml
+      volumes:
+        - name: grafana-storage
+          persistentVolumeClaim:
+            claimName: grafana-pvc-{{ include "pharos.name" $ }}
+        - name: dashboard-json
+          configMap:
+            name: grafana-dashboard-{{ include "pharos.name" $ }}
+        - name: grafana-config
+          configMap:
+            name: grafana-config-{{ include "pharos.name" $ }}
+{{ end }}

@@ -1,0 +1,79 @@
+{{ if .Values.pushGateway.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: "pushgateway-{{ include "pharos.name" $ }}"
+  namespace: {{ include "pharos.namespace" $ | quote }}
+  labels:
+    {{- include "pharos.labels.standard" ( dict "customLabels" $.Values.pushGateway.customLabels "context" $ ) | nindent 4 }}
+spec:
+  serviceName: pushgateway-headless-svc-{{ include "pharos.name" $ }}
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "pharos.labels.standard" ( dict "customLabels" $.Values.pushGateway.customLabels "context" $ ) | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "pharos.labels.standard" ( dict "customLabels" $.Values.pushGateway.customLabels "context" $ ) | nindent 8 }}
+    spec:
+      {{- if .Values.taints }}
+      {{- if .Values.taints.enabled }}
+      tolerations:
+      - key: {{ .Values.taints.key }}
+        operator: {{ .Values.taints.operator | default "Exists" }}
+        {{- if .Values.taints.value }}
+        value: {{ .Values.taints.value }}
+        {{- end }}
+        effect: {{ .Values.taints.effect | default "NoSchedule" }}
+      {{- end }}
+      {{- end }}
+        {{- if .Values.nodeSelector }}
+      nodeSelector:
+        {{- include "pharos.tplvalues.render" ( dict "value" .Values.nodeSelector "context" $ ) | nindent 8 }}
+        {{- end }}
+      securityContext:
+        fsGroup: 65534
+      containers:
+      - name: pushgateway
+        image: {{ .Values.pushGateway.image.repository }}:{{ .Values.pushGateway.image.tag }}
+        imagePullPolicy: {{ .Values.pushGateway.image.pullPolicy | default "IfNotPresent" }}
+        args:
+          - "--persistence.file=/data/pushgateway.data"
+          - "--persistence.interval=5m"
+        ports:
+        - containerPort: {{ default 9091 .Values.pushGateway.service.port }}
+          name: metrics
+        resources:
+          limits:
+            cpu: {{ .Values.pushGateway.resources.limits.cpu | default "500m" }}
+            memory: {{ .Values.pushGateway.resources.limits.memory | default "512Mi" }}
+          requests:
+            cpu: {{ .Values.pushGateway.resources.requests.cpu | default "100m" }}
+            memory: {{ .Values.pushGateway.resources.requests.memory | default "128Mi" }}
+        volumeMounts:
+        - name: prometheus-pushgateway-data
+          mountPath: /data
+        livenessProbe:
+          httpGet:
+            path: /-/healthy
+            port: 9091
+          initialDelaySeconds: 10
+          timeoutSeconds: 3
+        readinessProbe:
+          httpGet:
+            path: /-/ready
+            port: 9091
+          initialDelaySeconds: 10
+          timeoutSeconds: 3
+  volumeClaimTemplates:
+    - metadata:
+        name: prometheus-pushgateway-data
+      spec:
+        storageClassName: {{ default "default" .Values.pushGateway.persistence.storageClass }}
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: {{ default "50Gi" .Values.pushGateway.persistence.size }}
+
+{{ end }}

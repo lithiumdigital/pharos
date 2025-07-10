@@ -1,0 +1,10 @@
+{{ if .Values.alertmanager.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "alertmanager-config-{{ include "pharos.name" $ }}"
+  namespace: {{ include "pharos.namespace" $ | quote }}
+data:
+  alertmanager.yaml: |
+{{ toYaml .Values.alertmanager.config | indent 4 }}
+{{ end }}

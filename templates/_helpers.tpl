@@ -20,15 +20,19 @@ Create chart name and version as used by the chart label.
 
 {{/*
 Allow the release namespace to be overridden.
-If not set, use the network type as the namespace.
+If not set, use "pharos-" + network.type.
+If network.type is not set, fallback to .Release.Namespace.
 */}}
 {{- define "pharos.namespace" -}}
 {{- if .Values.namespaceOverride -}}
-{{- .Values.namespaceOverride | trunc 63 | trimSuffix "-" -}}
+  {{- .Values.namespaceOverride | trunc 63 | trimSuffix "-" -}}
+{{- else if .Values.network.type -}}
+  {{- printf "pharos-%s" .Values.network.type | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
-{{- .Values.network.type | default .Release.Namespace | trunc 63 | trimSuffix "-" -}}
+  {{- .Release.Namespace | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 {{- end -}}
+
 
 
 {{/*

@@ -2,10 +2,10 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: {{ include "pharos.name" $ | lower }}
-  namespace: "pharos-{{ include "pharos.namespace" $ }}"
+  namespace: {{ include "pharos.namespace" $ | quote }}
 spec:
   serviceName: "{{ include "pharos.name" $ | lower }}"
-  replicas: {{- if .Values.snapshot.enabled }} 0 {{- else }} 1 {{- end }}
+  replicas: {{ if or (eq .Values.snapshot.enabled true) (eq .Values.monitoring.enabled true) }} 0 {{ else }} 1 {{ end }}
   selector:
     matchLabels: {{- include "pharos.labels.standard" ( dict "customLabels" .Values.customLabels "context" $ ) | nindent 8 }}
   template:

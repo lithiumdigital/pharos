@@ -1,0 +1,14 @@
+{{- if .Values.prom2teams.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: "prom2teams-svc-{{ include "pharos.name" $ }}"
+  namespace: {{ include "pharos.namespace" $ | quote }}
+spec:
+  selector:
+    {{- include "pharos.labels.standard" ( dict "customLabels" $.Values.prom2teams.customLabels "context" $ ) | nindent 9 }}
+  ports:
+    - port: {{ .Values.prom2teams.service.port }}
+      targetPort: {{ .Values.prom2teams.service.port }}
+  type: ClusterIP
+{{ end }}

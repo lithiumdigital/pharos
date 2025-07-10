@@ -1,0 +1,39 @@
+{{ if .Values.pushGateway.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: "pushgateway-svc-{{ include "pharos.name" $ }}"
+  namespace: {{ include "pharos.namespace" $ | quote }}
+  labels:
+    app.kubernetes.io/component: metrics
+    jobLabel: {{ .Values.pushGateway.jobLabel | default "pushgateway-metrics" }}
+    {{- include "pharos.labels.standard" ( dict "customLabels" $.Values.pushGateway.customLabels "context" $ ) | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+  - port: 9091
+    targetPort: 9091
+    protocol: TCP
+    name: metrics
+  selector:
+    {{- include "pharos.labels.standard" ( dict "customLabels" $.Values.pushGateway.customLabels "context" $ ) | nindent 4 }}
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: "pushgateway-headless-svc-{{ include "pharos.name" $ }}"
+  namespace: {{ include "pharos.namespace" $ | quote }}
+  labels:
+    {{- include "pharos.labels.standard" ( dict "customLabels" $.Values.pushGateway.customLabels "context" $ ) | nindent 4 }}
+spec:
+  clusterIP: None
+  ports:
+  - port: 9091
+    targetPort: 9091
+    protocol: TCP
+    name: metrics
+  selector:
+    {{- include "pharos.labels.standard" ( dict "customLabels" $.Values.pushGateway.customLabels "context" $ ) | nindent 4 }}
+
+{{ end }}

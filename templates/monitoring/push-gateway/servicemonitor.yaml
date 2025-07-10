@@ -1,0 +1,16 @@
+{{ if .Values.pushGateway.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: "push-gateway-smon-{{ include "pharos.name" $ }}"
+  namespace: {{ include "pharos.namespace" $ | quote }}
+spec:
+  jobLabel: {{ .Values.pushGateway.jobLabel | default "pushgateway-metrics" }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: metrics
+  endpoints:
+  - port: metrics
+    interval: 15s
+    honorLabels: true
+{{ end }}
