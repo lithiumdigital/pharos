@@ -22,11 +22,11 @@ spec:
       {{- if .Values.taints.enabled }}
       tolerations:
       - key: {{ .Values.taints.key }}
-        operator: {{ .Values.taints.operator | default "Exists" }}
+        operator: {{ default "Exists"  .Values.taints.operator }}
         {{- if .Values.taints.value }}
         value: {{ .Values.taints.value }}
         {{- end }}
-        effect: {{ .Values.taints.effect | default "NoSchedule" }}
+        effect: {{ default "NoSchedule" .Values.taints.effect }}
       {{- end }}
       {{- end }}
         {{- if .Values.nodeSelector }}
@@ -36,14 +36,14 @@ spec:
       containers:
         - name: alertmanager
           image: {{ .Values.alertmanager.image.repository }}:{{ .Values.alertmanager.image.tag }}
-          imagePullPolicy: {{ .Values.alertmanager.image.pullPolicy | default "IfNotPresent" }}
+          imagePullPolicy: {{ default "IfNotPresent" .Values.alertmanager.image.pullPolicy }}
           resources:
             limits:
-              cpu: {{ .Values.alertmanager.resources.limits.cpu | default "500m" }}
-              memory: {{ .Values.alertmanager.resources.limits.memory | default "512Mi" }}
+              cpu: {{ default "500m" .Values.alertmanager.resources.limits.cpu }}
+              memory: {{ default "512Mi" .Values.alertmanager.resources.limits.memory }}
             requests:
-              cpu: {{ .Values.alertmanager.resources.requests.cpu | default "100m" }}
-              memory: {{ .Values.alertmanager.resources.requests.memory | default "128Mi" }}
+              cpu: {{ default "100m" .Values.alertmanager.resources.requests.cpu }}
+              memory: {{ default "128Mi" .Values.alertmanager.resources.requests.memory }}
           ports:
             - containerPort: {{ .Values.alertmanager.service.port }}
           args:

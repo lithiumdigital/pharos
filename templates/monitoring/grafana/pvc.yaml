@@ -10,5 +10,5 @@ spec:
   storageClassName: {{ default "default" .Values.grafana.persistence.storageClass }}
   resources:
     requests:
-      storage: {{ .Values.grafana.persistence.size | default "50Gi" }}
+      storage: {{ default "50Gi" .Values.grafana.persistence.size }}
 {{ end }}

@@ -11,5 +11,4 @@ spec:
       targetPort: {{ .Values.alertmanager.service.port }}
   selector:
     {{- include "pharos.labels.standard" ( dict "customLabels" $.Values.alertmanager.customLabels "context" $ ) | nindent 9 }}
-
 {{ end }}

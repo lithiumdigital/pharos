@@ -19,6 +19,6 @@ spec:
       certificateRefs:
       - group: ""
         kind: Secret
-        name: {{ .Values.certmanager.certificate.secretName | default "domain-cert" }}
+        name: {{ default "domain-cert" .Values.certmanager.certificate.secretName }}
       mode: Terminate
 {{ end }}

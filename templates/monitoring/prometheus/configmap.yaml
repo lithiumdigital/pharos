@@ -10,9 +10,9 @@ data:
     ---
     # global settings
     global:
-      scrape_interval: {{ .Values.prometheus.scrapeInterval | default "15s" }} # Default scrape interval
-      evaluation_interval: {{ .Values.prometheus.evaluationInterval | default "60s" }} # Default evaluation interval
-  
+      scrape_interval: {{ default "15s" .Values.prometheus.scrapeInterval }} # Default scrape interval
+      evaluation_interval: {{ default "60s" .Values.prometheus.evaluationInterval }} # Default evaluation interval
+
     alerting:
       alertmanagers:
       {{- toYaml .Values.prometheus.alertmanagers | nindent 8 }}

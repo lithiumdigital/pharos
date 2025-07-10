@@ -21,11 +21,11 @@ spec:
       {{- if .Values.taints.enabled }}
       tolerations:
       - key: {{ .Values.taints.key }}
-        operator: {{ .Values.taints.operator | default "Exists" }}
+        operator: {{ default "Exists" .Values.taints.operator }}
         {{- if .Values.taints.value }}
         value: {{ .Values.taints.value }}
         {{- end }}
-        effect: {{ .Values.taints.effect | default "NoSchedule" }}
+        effect: {{ default "NoSchedule" .Values.taints.effect }}
       {{- end }}
       {{- end }}
         {{- if .Values.nodeSelector }}
@@ -46,11 +46,11 @@ spec:
           name: metrics
         resources:
           limits:
-            cpu: {{ .Values.pushGateway.resources.limits.cpu | default "500m" }}
-            memory: {{ .Values.pushGateway.resources.limits.memory | default "512Mi" }}
+            cpu: {{ default "500m" .Values.pushGateway.resources.limits.cpu }}
+            memory: {{ default "512Mi" .Values.pushGateway.resources.limits.memory }}
           requests:
-            cpu: {{ .Values.pushGateway.resources.requests.cpu | default "100m" }}
-            memory: {{ .Values.pushGateway.resources.requests.memory | default "128Mi" }}
+            cpu: {{ default "100m" .Values.pushGateway.resources.requests.cpu }}
+            memory: {{ default "128Mi" .Values.pushGateway.resources.requests.memory }}
         volumeMounts:
         - name: prometheus-pushgateway-data
           mountPath: /data

@@ -20,11 +20,11 @@ spec:
       {{- if .Values.taints.enabled }}
       tolerations:
       - key: {{ .Values.taints.key }}
-        operator: {{ .Values.taints.operator | default "Exists" }}
+        operator: {{ default "Exists" .Values.taints.operator }}
         {{- if .Values.taints.value }}
         value: {{ .Values.taints.value }}
         {{- end }}
-        effect: {{ .Values.taints.effect | default "NoSchedule" }}
+        effect: {{ default "NoSchedule" .Values.taints.effect }}
       {{- end }}
       {{- end }}
         {{- if .Values.nodeSelector }}
@@ -36,14 +36,14 @@ spec:
       containers:
         - name: grafana
           image: {{ .Values.grafana.image.repository }}:{{ .Values.grafana.image.tag }}
-          imagePullPolicy: {{ .Values.grafana.image.pullPolicy | default "IfNotPresent" }}
+          imagePullPolicy: {{ default "IfNotPresent" .Values.grafana.image.pullPolicy }}
           resources:
             limits:
-              cpu: {{ .Values.grafana.resources.limits.cpu | default "500m" }}
-              memory: {{ .Values.grafana.resources.limits.memory | default "512Mi" }}
+              cpu: {{ default "500m" .Values.grafana.resources.limits.cpu }}
+              memory: {{ default "512Mi" .Values.grafana.resources.limits.memory }}
             requests:
-              cpu: {{ .Values.grafana.resources.requests.cpu | default "100m" }}
-              memory: {{ .Values.grafana.resources.requests.memory | default "128Mi" }} 
+              cpu: {{ default "100m" .Values.grafana.resources.requests.cpu }}
+              memory: {{ default "128Mi" .Values.grafana.resources.requests.memory }}
           ports:
             - containerPort: {{ .Values.grafana.service.port }}
           env:
@@ -58,13 +58,13 @@ spec:
                   name: grafana-secrets-{{ include "pharos.name" $ }}
                   key: GF_SECURITY_ADMIN_PASSWORD
             - name: GF_METRICS_ENABLED
-              value: {{ .Values.grafana.config.GF_METRICS_ENABLED | default "false" | quote }}
+              value: {{ default "false" .Values.grafana.config.GF_METRICS_ENABLED | quote }}
             - name: GF_USERS_DEFAULT_THEME
-              value: {{ .Values.grafana.config.GF_USERS_DEFAULT_THEME | default "dark" }}
+              value: {{ default "dark" .Values.grafana.config.GF_USERS_DEFAULT_THEME | quote }}
             - name: GF_SECURITY_DISABLE_BRUTE_FORCE_LOGIN_PROTECTION
-              value: {{ .Values.grafana.config.GF_SECURITY_DISABLE_BRUTE_FORCE_LOGIN_PROTECTION | default "true" | quote }}
+              value: {{ default "true" .Values.grafana.config.GF_SECURITY_DISABLE_BRUTE_FORCE_LOGIN_PROTECTION | quote }}
             - name: GF_USERS_ALLOW_SIGN_UP
-              value: {{ .Values.grafana.config.GF_USERS_ALLOW_SIGN_UP | default "false" | quote }}
+              value: {{ default "false" .Values.grafana.config.GF_USERS_ALLOW_SIGN_UP | quote }}
           volumeMounts:
             - name: grafana-storage
               mountPath: /var/lib/grafana

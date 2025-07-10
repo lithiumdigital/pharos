@@ -10,5 +10,5 @@ spec:
   storageClassName: {{ default "default" .Values.alertmanager.persistence.storageClass }}
   resources:
     requests:
-      storage: {{ .Values.alertmanager.persistence.size | default "50Gi" }}
+      storage: {{ default "50Gi" .Values.alertmanager.persistence.size }}
 {{ end }}

@@ -9,10 +9,6 @@ image:
   tag: "pharos_community_v4_0708"
   pullPolicy: IfNotPresent
 
-# image:
-#   repository: public.ecr.aws/k2g7b7g1/pharos/testnet
-#   tag: "rpc_community_0629"
-#   pullPolicy: IfNotPresent
 
 monitoring:
   enabled: false
@@ -35,7 +31,6 @@ persistence:
   size: 2500Gi
 
 snapshot:
-  # url: "https://snapshot.dplabs-internal.com/testnet/snapshot-2025-06-24-03-17.tar.gz"
   url: "https://snapshot.dplabs-internal.com/testnet/snapshot-2025-05-27-03-13.tar.gz"
   dataDir: "/data/pharos-node/domain/light/data/public"
   enabled: false
@@ -50,8 +45,7 @@ taints:
 # Node selector configuration
   # Example:
   # kubernetes.io/hostname: my-node.hostname
-nodeSelector:
-  kubernetes.io/hostname: mynode.name.com
+nodeSelector: {}
 
 customLabels: {}
 
