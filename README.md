@@ -1,6 +1,6 @@
-# Pharos Testnet Helm Chart
+# Pharos Helm Chart
 
-This Helm chart deploys the Pharos testnet using a Kubernetes StatefulSet and Service. It is designed for easy configuration, and management of the Pharos blockchain testnet nodes.
+This Helm chart deploys the Pharos node using a Kubernetes StatefulSet and Service. It is designed for easy configuration, and management of the Pharos blockchain nodes.
 
 ---
 
@@ -91,7 +91,6 @@ All configurable parameters are defined in values.yaml. You can override any val
 
 | Parameter                        | Description                                                 | Default                                      |
 |----------------------------------|-------------------------------------------------------------|----------------------------------------------|
-| `namespace`                      | Namespace to deploy resources                               | `pharos-testnet`                             |
 | `nameOverride`                   | Override the release name                                   | `""`                                         |
 | `namespaceOverride`              | Override the default namespace                              | `""`                                         |
 | `network.type`                   | Type of network to deploy (`mainnet`, `testnet`, etc.)      | `testnet`                                    |
@@ -364,7 +363,7 @@ kubectl delete pvc -l app.kubernetes.io/instance=<release-name> -n <namespace>
 ## Example values.yaml
 
 ```yaml
-namespace: pharos-testnet
+
 
 image:
   repository: public.ecr.aws/k2g7b7g1/pharos/testnet
