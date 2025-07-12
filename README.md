@@ -188,6 +188,10 @@ This chart supports restoring blockchain data from a snapshot using a Kubernetes
      dataDir: "/data/pharos-node/domain/light/data/public"
    ```
 
+   ```sh
+   helm upgrade --install <release-name> . 
+   ```
+
    Or via CLI:
 
    ```sh
@@ -197,23 +201,16 @@ This chart supports restoring blockchain data from a snapshot using a Kubernetes
      --set snapshot.dataDir="/data/pharos-node/domain/light/data/public"
    ```
 
-2. **Upgrade or install the chart:**
-
-   ```sh
-   helm upgrade --install <release-name> . 
-   ```
-
-   The snapshot Job will be created and run alongside other resources.  
    **Setting snapshot.enabled=true scales down the pharos-node StatefulSet to 0 replicas.**
 
-3. **After the Job completes, disable the snapshot job:**
+2. **After the Job completes, disable the snapshot job:**
 
    ```sh
    helm upgrade <release-name> . --set snapshot.enabled=false
    ```
     This will remove the snapshot Job and scale the main StatefulSet back up.
 
-4. **You can manually scale the main StatefulSet back up:**
+3. **You can manually scale the main StatefulSet back up:**
 
    ```sh
    kubectl scale statefulset <release-name> --replicas=1 -n <namespace>
@@ -258,7 +255,11 @@ This chart supports configuring the `monitor.conf` file at `/data/pharos-node/do
      confPath: /data/pharos-node/domain/light/conf/monitor.conf
      pushGatewayAddress: "http://pushgateway.example.com:9091"
      pushInterval: 5
+   ```
 
+   ```sh
+   helm upgrade --install <release-name> . 
+   ```
 
    Or via CLI:
 
@@ -270,23 +271,16 @@ This chart supports configuring the `monitor.conf` file at `/data/pharos-node/do
      --set monitoring.pushInterval=5
    ```
 
-2. **Upgrade or install the chart:**
-
-   ```sh
-   helm upgrade --install <release-name> . 
-   ```
-
-   The monitoring Job will be created and run alongside other resources.  
    **Setting monitoring.enabled=true scales down the pharos-node StatefulSet to 0 replicas.**
 
-3. **After the Job completes, disable the monitoring job:**
+2. **After the Job completes, disable the monitoring job:**
 
    ```sh
    helm upgrade <release-name> . --set monitoring.enabled=false
    ```
     This will remove the monitoring Job and scale the main StatefulSet back up.
 
-4. **You can manually scale the main StatefulSet back up:**
+3. **You can manually scale the main StatefulSet back up:**
 
    ```sh
    kubectl scale statefulset <release-name> --replicas=1 -n <namespace>
@@ -397,4 +391,8 @@ snapshot:
 ## Contributing
 
 Contributions are welcome! Please fork the repository and submit a pull request.
+
+---
+## License
+This project is licensed under the Apache License 2.0. See the [LICENSE](LICENSE) file for details.
 

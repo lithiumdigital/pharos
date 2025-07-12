@@ -1,0 +1,263 @@
+nameOverride: ""
+namespaceOverride: ""
+
+network:
+  type: testnet
+
+image:
+  repository: public.ecr.aws/k2g7b7g1/pharos/testnet
+  tag: "pharos_community_v4_0708"
+  pullPolicy: IfNotPresent
+
+
+monitoring:
+  enabled: false
+  confPath: /data/pharos-node/domain/light/conf/monitor.conf
+  pushGatewayAddress: ""
+  pushInterval: 5
+
+resources:
+  requests:
+    cpu: "12"
+    memory: "64Gi"
+  limits:
+    cpu: "16"
+    memory: "100Gi"
+
+persistence:
+  storageClass: "default"
+  accessModes:
+    - ReadWriteOnce
+  size: 2500Gi
+
+snapshot:
+  url: "https://snapshot.dplabs-internal.com/testnet/snapshot-2025-05-27-03-13.tar.gz"
+  dataDir: "/data/pharos-node/domain/light/data/public"
+  enabled: false
+
+taints:
+  enabled: true  # Set to false to disable taints
+  key: "reserved"  # The taint key to tolerate
+  operator: "Equal" # Optional: Can be "Exists" or "Equal" (defaults to "Exists") 
+  value: "alpha"  # The taint value (only needed with Equal operator)
+  effect: "NoSchedule"  # Can be NoSchedule, PreferNoSchedule, or NoExecute
+
+# Node selector configuration
+  # Example:
+  # kubernetes.io/hostname: my-node.hostname
+nodeSelector: {}
+
+customLabels: {}
+
+gateway:
+  enabled: false
+  controllerName: "gateway.envoyproxy.io/gatewayclass-controller"
+  className: "envoy"
+  allowedRoutes:
+    namespaces:
+      from: "All" 
+
+certmanager:
+  enabled: false
+  acme:
+    email: "<your-email@example.com>"
+    server: "https://acme-v02.api.letsencrypt.org/directory"
+  certificate:
+    name: "domain-cert"
+    secretName: "domain-cert"
+    dnsNames:
+      - "example.com"
+      - "www.example.com"
+
+  clusterIssuer:
+    name: "letsencrypt"
+    secretName: "letsencrypt"
+
+prometheus:
+  enabled: false
+  image:
+    repository: prom/prometheus
+    tag: "main"
+    pullPolicy: IfNotPresent
+  service:
+    port: 9090
+  retention: "15d"
+  customLabels:
+    app: prometheus
+  httproute:
+    hostname: "prometheus.example.com"
+  resources:
+    limits:
+      cpu: "1"
+      memory: "2Gi"
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+  persistence:
+    storageClass: "default"
+    size: "100Gi"
+  scrapeInterval: "15s"
+  evaluationInterval: "60s"
+  alertingRules:
+    - alert: AnotherCustomAlert
+      expr: some_metric > 100
+      for: 1m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Another custom alert"
+  alertmanagers:
+    - timeout: 10s
+      static_configs:
+        - targets:
+            - 'alertmanager-svc-pharos-testnet:9093'
+  scrapeConfigs:
+    - job_name: 'pharos-metrics'
+      metrics_path: '/metrics'
+      static_configs:
+        - targets:
+            - "pushgateway-svc-pharos-testnet:9091"
+          labels:
+            alias: 'pharos_node'
+            instance: 'pharos_node'
+    # Add more jobs as needed
+
+alertmanager:
+  enabled: false
+  image:
+    repository: prom/alertmanager
+    tag: "v0.25.0"
+    pullPolicy: IfNotPresent
+  service:
+    port: 9093
+  customLabels:
+    app: alertmanager
+  httproute:
+    hostname: "alertmanager.example.com"
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+  persistence:
+    storageClass: "default"
+    size: "50Gi"
+  config:
+    global:
+      resolve_timeout: 5m
+    route:
+      group_by: ["instance", "alertname"]
+      group_wait: 2m
+      group_interval: 15m
+      repeat_interval: 1h
+      receiver: "dummy_channel1"
+      # routes:
+      #   - match:
+      #       severity: critical
+      #     group_by: ["alertname", "job"]
+      #     group_wait: 2m
+      #     group_interval: 15m
+      #     repeat_interval: 1h
+      #     receiver: "notifications_channel1"
+      #   - match:
+      #       severity: warning
+      #     receiver: "notifications_channel2"
+      #     group_wait: 1m
+      #     group_interval: 10m
+      #     repeat_interval: 1h
+    receivers:
+      - name: "dummy_channel1"
+        webhook_configs:
+          - url: "http://prom2teams-svc-pharos-testnet:8089/v2/dummy_channel1"
+            send_resolved: true
+            max_alerts: 10
+      # - name: "notifications_channel1"
+      #   webhook_configs:
+      #     - url: "http://my_prom2teams_connector_or_webhookurl/v2/notifications_channel1"
+      #       send_resolved: true
+      #       max_alerts: 10
+
+prom2teams:
+  enabled: false
+  image:
+    repository: idealista/prom2teams
+    tag: "5.0.0"
+    pullPolicy: IfNotPresent
+  service:
+    port: 8089
+  http:
+    host: localhost
+    port: 8089
+  logLevel: INFO
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+  templatePath: "/opt/prom2teams/templates/teams.j2"
+  customLabels:
+    app: prom2teams
+  connectors:
+    - name: "dummy_channel1"
+      url: "https://yourteamswebhook.url.here"
+    # - name: "notifications_channel2"
+    #   url: "https://anotherteamswebhook.url.here"
+
+pushGateway:
+  enabled: false
+  image:
+    repository: prom/pushgateway
+    tag: "v1.6.2"
+    pullPolicy: IfNotPresent
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+  service:
+    port: 9091
+  customLabels:
+    app: prometheus-pushgateway
+  jobLabel: pushgateway-metrics
+  persistence:
+    storageClass: "default"
+    size: "50Gi"
+
+grafana:
+  enabled: false
+  image:
+    repository: grafana/grafana
+    tag: "10.0.0"
+    pullPolicy: IfNotPresent
+  service:
+    port: 3000
+  customLabels:
+    app: grafana
+  httproute:
+    hostname: "grafana.example.com"
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+  datasources:
+    prometheus:
+      url: ""
+  persistence:
+    storageClass: "default"
+    size: "50Gi"
+  config:
+    GF_SECURITY_ADMIN_USER: admin
+    GF_SECURITY_ADMIN_PASSWORD: admin
+    GF_USERS_DEFAULT_THEME: dark
+    GF_METRICS_ENABLED: true
+    GF_SECURITY_DISABLE_BRUTE_FORCE_LOGIN_PROTECTION: true
+    GF_USERS_ALLOW_SIGN_UP: false
