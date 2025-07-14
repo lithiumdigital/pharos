@@ -1,0 +1,18 @@
+apiVersion: v1
+entries:
+  pharos-node:
+  - apiVersion: v2
+    appVersion: "1.0"
+    created: "2025-07-12T13:53:22.769938188Z"
+    description: A Helm chart for deploying the Pharos node
+    digest: 1fd8a389e7ac54e8ca6041ae82310a5c40ab2dfcec2a8371659e3690748227fc
+    home: https://www.lithiumdigital.com
+    maintainers:
+    - email: info@lithiumdigital.com
+      name: Lithium Digital
+    name: pharos-node
+    type: application
+    urls:
+    - https://lithiumdigital.github.io/pharos/pharos-node-0.1.0.tgz
+    version: 0.1.0
+generated: "2025-07-12T13:53:22.764812657Z"
