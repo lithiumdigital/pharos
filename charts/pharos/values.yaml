@@ -22,7 +22,7 @@ resources:
     memory: "64Gi"
   limits:
     cpu: "16"
-    memory: "100Gi"
+    memory: "100Gi" # 512 GB is recommended
 
 persistence:
   storageClass: "default"
@@ -34,6 +34,7 @@ snapshot:
   url: "https://snapshot.dplabs-internal.com/testnet/snapshot-2025-05-27-03-13.tar.gz"
   dataDir: "/data/pharos-node/domain/light/data/public"
   enabled: false
+  skipDownload: false
 
 taints:
   enabled: true  # Set to false to disable taints

@@ -37,6 +37,8 @@ spec:
           value: "{{ .Values.snapshot.url }}"
         - name: DATA_DIR
           value: "{{ .Values.snapshot.dataDir }}"
+        - name: SKIP_DOWNLOAD
+          value: "{{ .Values.snapshot.skipDownload | default "false" }}"
         command:
         - /bin/bash
         - -c
@@ -44,14 +46,24 @@ spec:
           set -e
           apt-get update
           apt-get install -y wget tar gzip
-          echo "Downloading snapshot..."
-          wget "$SNAPSHOT_URL" -O snapshot.tar.gz
+          echo "Removing previous extraction (if any)..."
+          rm -rf public/
+
+          if [ "$SKIP_DOWNLOAD" = "true" ]; then
+            echo "Skipping snapshot download as requested. Using existing snapshot.tar.gz"
+          else
+            echo "Downloading snapshot..."
+            wget "$SNAPSHOT_URL" -O snapshot.tar.gz
+          fi
+
           echo "Extracting snapshot..."
           tar -zxvf snapshot.tar.gz
-          echo "Replacing data directory..."
-          rm -rf "$DATA_DIR"
+
+          echo "Moving extracted data to $DATA_DIR..."
           mv public "$DATA_DIR"
-          echo "Snapshot initialization complete. Job will now exit."
+
+          echo "Snapshot process complete. Job will now exit."
+
         volumeMounts:
         - name: pharos-data
           mountPath: /data
