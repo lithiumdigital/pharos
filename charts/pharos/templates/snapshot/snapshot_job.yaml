@@ -47,7 +47,7 @@ spec:
           apt-get update
           apt-get install -y wget tar gzip
           echo "Removing previous extraction (if any)..."
-          rm -rf public/
+          rm -rf public/ "$DATA_DIR"
 
           if [ "$SKIP_DOWNLOAD" = "true" ]; then
             echo "Skipping snapshot download as requested. Using existing snapshot.tar.gz"
