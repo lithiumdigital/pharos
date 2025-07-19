@@ -1,0 +1,61 @@
+{{- if .Values.prom2teams.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "prom2teams-{{ include "pharos.name" $ }}"
+  namespace: {{ include "pharos.namespace" $ | quote }}
+  labels:
+    {{- include "pharos.labels.standard" ( dict "customLabels" $.Values.prom2teams.customLabels "context" $ ) | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "pharos.labels.standard" ( dict "customLabels" $.Values.prom2teams.customLabels "context" $ ) | nindent 6 }}
+  template:
+    metadata:
+      labels:
+         {{- include "pharos.labels.standard" ( dict "customLabels" $.Values.prom2teams.customLabels "context" $ ) | nindent 8 }}
+    spec:
+      {{- if .Values.taints }}
+      {{- if .Values.taints.enabled }}
+      tolerations:
+      - key: {{ .Values.taints.key }}
+        operator: {{ default "Exists" .Values.taints.operator }}
+        {{- if .Values.taints.value }}
+        value: {{ .Values.taints.value }}
+        {{- end }}
+        effect: {{ default "NoSchedule" .Values.taints.effect }}
+      {{- end }}
+      {{- end }}
+        {{- if .Values.nodeSelector }}
+      nodeSelector:
+        {{- include "pharos.tplvalues.render" ( dict "value" .Values.nodeSelector "context" $ ) | nindent 8 }}
+        {{- end }}
+      containers:
+      - name: prom2teams
+        image: {{ .Values.prom2teams.image.repository }}:{{ .Values.prom2teams.image.tag }}
+        imagePullPolicy: {{ .Values.prom2teams.image.pullPolicy }}
+        ports:
+          - containerPort: {{ .Values.prom2teams.service.port }}
+        resources:
+          limits:
+            cpu: {{ default "500m" .Values.prom2teams.resources.limits.cpu }}
+            memory: {{ default "512Mi" .Values.prom2teams.resources.limits.memory }}
+          requests:
+            cpu: {{ default "250m" .Values.prom2teams.resources.requests.cpu }}
+            memory: {{ default "256Mi" .Values.prom2teams.resources.requests.memory }}
+        volumeMounts:
+        - name: templates
+          mountPath: {{ .Values.prom2teams.templatePath }}
+          subPath: teams.j2
+        - name: config
+          mountPath: /opt/prom2teams/config.ini
+          subPath: config.ini
+      volumes:
+      - name: templates
+        configMap:
+          name: "prom2teams-config-{{ include "pharos.name" $ }}"
+      - name: config
+        secret:
+          secretName: "prom2teams-secrets-{{ include "pharos.name" $ }}"
+{{ end }}

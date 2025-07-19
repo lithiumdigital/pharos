@@ -1,0 +1,24 @@
+{{ if .Values.gateway.enabled }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: "gateway-{{ include "pharos.name" $ }}"
+  namespace: {{ include "pharos.namespace" $ | quote }}
+spec:
+  gatewayClassName: {{ .Values.gateway.className }}
+  listeners:
+  - allowedRoutes:
+      namespaces:
+        {{- $defaultNs := printf "pharos-%s" (include "pharos.namespace" $) }}
+        from: {{ default $defaultNs .Values.gateway.allowedRoutes.namespaces.from | quote }}
+    hostname: {{ .Values.gateway.hostname | quote }}
+    name: https
+    port: 443
+    protocol: HTTPS
+    tls:
+      certificateRefs:
+      - group: ""
+        kind: Secret
+        name: {{ default "domain-cert" .Values.certmanager.certificate.secretName }}
+      mode: Terminate
+{{ end }}

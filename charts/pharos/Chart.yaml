@@ -1,0 +1,10 @@
+apiVersion: v2
+name: pharos-node
+description: A Helm chart for deploying the Pharos node
+type: application
+version: 0.1.0
+appVersion: "1.0"
+home: https://www.lithiumdigital.com 
+maintainers:
+  - name: Lithium Digital
+    email: info@lithiumdigital.com

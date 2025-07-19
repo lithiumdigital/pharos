@@ -1,0 +1,66 @@
+{{ if .Values.alertmanager.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "alertmanager-{{ include "pharos.name" $ }}"
+  namespace: {{ include "pharos.namespace" $ | quote }}
+  labels:
+    {{- include "pharos.labels.standard" ( dict "customLabels" $.Values.alertmanager.customLabels "context" $ ) | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+     {{- include "pharos.labels.standard" ( dict "customLabels" $.Values.alertmanager.customLabels "context" $ ) | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "pharos.labels.standard" ( dict "customLabels" $.Values.alertmanager.customLabels "context" $ ) | nindent 8 }}
+    spec:
+      securityContext:
+        fsGroup: 65534
+      {{- if .Values.taints }}
+      {{- if .Values.taints.enabled }}
+      tolerations:
+      - key: {{ .Values.taints.key }}
+        operator: {{ default "Exists"  .Values.taints.operator }}
+        {{- if .Values.taints.value }}
+        value: {{ .Values.taints.value }}
+        {{- end }}
+        effect: {{ default "NoSchedule" .Values.taints.effect }}
+      {{- end }}
+      {{- end }}
+        {{- if .Values.nodeSelector }}
+      nodeSelector:
+        {{- include "pharos.tplvalues.render" ( dict "value" .Values.nodeSelector "context" $ ) | nindent 8 }}
+        {{- end }}
+      containers:
+        - name: alertmanager
+          image: {{ .Values.alertmanager.image.repository }}:{{ .Values.alertmanager.image.tag }}
+          imagePullPolicy: {{ default "IfNotPresent" .Values.alertmanager.image.pullPolicy }}
+          resources:
+            limits:
+              cpu: {{ default "500m" .Values.alertmanager.resources.limits.cpu }}
+              memory: {{ default "512Mi" .Values.alertmanager.resources.limits.memory }}
+            requests:
+              cpu: {{ default "100m" .Values.alertmanager.resources.requests.cpu }}
+              memory: {{ default "128Mi" .Values.alertmanager.resources.requests.memory }}
+          ports:
+            - containerPort: {{ .Values.alertmanager.service.port }}
+          args:
+            - "--config.file=/etc/alertmanager/alertmanager.yaml"
+            - "--storage.path=/alertmanager"
+          volumeMounts:
+            - name: alertmanager-config
+              mountPath: /etc/alertmanager
+              readOnly: true
+            - name: alertmanager-storage
+              mountPath: /alertmanager
+      volumes:
+        - name: alertmanager-config
+          configMap:
+            name: alertmanager-config-{{ include "pharos.name" $ }}
+        - name: alertmanager-storage
+          persistentVolumeClaim:
+            claimName: alertmanager-pvc-{{ include "pharos.name" $ }}
+
+{{ end }}

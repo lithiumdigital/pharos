@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "pharos.name" $ | lower }}
+  namespace: {{ include "pharos.namespace" $ | quote }}
+spec:
+  serviceName: "{{ include "pharos.name" $ | lower }}"
+  replicas: {{ if or (eq .Values.snapshot.enabled true) (eq .Values.monitoring.enabled true) }} 0 {{ else }} 1 {{ end }}
+  selector:
+    matchLabels: {{- include "pharos.labels.standard" ( dict "customLabels" .Values.customLabels "context" $ ) | nindent 8 }}
+  template:
+    metadata:
+      labels: 
+      {{- include "pharos.labels.standard" ( dict "customLabels" .Values.customLabels "context" $ ) | nindent 8 }}
+    spec:
+      {{- if .Values.taints }}
+      {{- if .Values.taints.enabled }}
+      tolerations:
+      - key: {{ .Values.taints.key }}
+        operator: {{ default "Exists" .Values.taints.operator }}
+        {{- if .Values.taints.value }}
+        value: {{ .Values.taints.value }}
+        {{- end }}
+        effect: {{ default "NoSchedule" .Values.taints.effect }}
+      {{- end }}
+      {{- end }}
+        {{- if .Values.nodeSelector }}
+      nodeSelector:
+        {{- include "pharos.tplvalues.render" ( dict "value" .Values.nodeSelector "context" $ ) | nindent 8 }}
+        {{- end }}
+      containers:
+      - name: pharos
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: 18100
+          name: rpc
+        - containerPort: 18200
+          name: p2p
+        - containerPort: 19000
+          name: internal
+        volumeMounts:
+        - name: pharos-data
+          mountPath: /data
+        resources:
+          requests:
+            cpu: {{ .Values.resources.requests.cpu }}
+            memory: {{ .Values.resources.requests.memory }}
+          limits:
+            cpu: {{ .Values.resources.limits.cpu }}
+            memory: {{ .Values.resources.limits.memory }}
+  volumeClaimTemplates:
+    - metadata:
+        name: pharos-data
+      spec:
+        storageClassName: {{ default "default" .Values.persistence.storageClass }}
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: {{ .Values.persistence.size }}

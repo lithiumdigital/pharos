@@ -1,0 +1,14 @@
+{{ if .Values.alertmanager.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: "alertmanager-pvc-{{ include "pharos.name" $ }}"
+  namespace: {{ include "pharos.namespace" $ | quote }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ default "default" .Values.alertmanager.persistence.storageClass }}
+  resources:
+    requests:
+      storage: {{ default "50Gi" .Values.alertmanager.persistence.size }}
+{{ end }}

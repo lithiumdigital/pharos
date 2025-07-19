@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "pharos.name" $ | lower }}
+  namespace: {{ include "pharos.namespace" $ | quote }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: 18100
+      targetPort: rpc
+      name: rpc
+    - port: 18200
+      targetPort: p2p
+      name: p2p
+    - port: 19000
+      targetPort: internal
+      name: internal
+  selector:
+    {{- include "pharos.labels.standard" ( dict "customLabels" .Values.customLabels "context" $ ) | nindent 7 }}

@@ -1,0 +1,16 @@
+{{ if .Values.certmanager.enabled }}
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: {{ default "letsencrypt" .Values.certmanager.clusterIssuer.name }}
+spec:
+  acme:
+    email: {{ default "you@example.com" .Values.certmanager.acme.email }}
+    server: {{ default "https://acme-v02.api.letsencrypt.org/directory" .Values.certmanager.acme.server }}
+    privateKeySecretRef:
+      name: {{ default "letsencrypt" .Values.certmanager.clusterIssuer.secretName }}
+    solvers:
+    - http01:
+        ingress:
+          class: {{ .Values.gateway.className }}
+{{ end }}

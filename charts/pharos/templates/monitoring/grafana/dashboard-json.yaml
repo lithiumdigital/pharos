@@ -1,0 +1,12 @@
+{{- if .Values.grafana.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "grafana-dashboard-{{ include "pharos.name" $ }}"
+  namespace: {{ include "pharos.namespace" $ | quote }}
+  labels:
+    grafana_dashboard: "1"
+data:
+  pharos-dashboard.json: |
+{{ .Files.Get "dashboards/pharos-dashboard.json" | indent 4 }}
+{{- end }}

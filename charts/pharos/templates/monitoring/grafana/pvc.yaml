@@ -1,0 +1,14 @@
+{{ if .Values.grafana.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: "grafana-pvc-{{ include "pharos.name" $ }}"
+  namespace: {{ include "pharos.namespace" $ | quote }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ default "default" .Values.grafana.persistence.storageClass }}
+  resources:
+    requests:
+      storage: {{ default "50Gi" .Values.grafana.persistence.size }}
+{{ end }}

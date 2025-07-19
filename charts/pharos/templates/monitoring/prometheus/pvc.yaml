@@ -1,0 +1,14 @@
+{{ if .Values.prometheus.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: "prometheus-pvc-{{ include "pharos.name" $ }}"
+  namespace: {{ include "pharos.namespace" $ | quote }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ default "default" .Values.prometheus.persistence.storageClass }}
+  resources:
+    requests:
+      storage: {{ default "100Gi" .Values.prometheus.persistence.size }}
+{{ end}}

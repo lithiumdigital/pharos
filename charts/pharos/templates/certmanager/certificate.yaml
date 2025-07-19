@@ -1,0 +1,16 @@
+{{ if .Values.certmanager.enabled }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ default "mydomaincert" .Values.certmanager.certificate.name }}
+  namespace: {{ include "pharos.namespace" $ | quote }}
+spec:
+  secretName: {{ default "mydomaincert" .Values.certmanager.certificate.secretName }}
+  dnsNames:
+  {{- range .Values.certmanager.certificate.dnsNames }}
+  - {{ . | quote }}
+  {{- end }}
+  issuerRef:
+    name: {{ default "letsencrypt" .Values.certmanager.clusterIssuer.name }}
+    kind: ClusterIssuer
+{{- end }}

@@ -1,0 +1,82 @@
+{{- if .Values.snapshot.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pharos-snapshot
+  namespace: {{ include "pharos.namespace" $ | quote }}
+  labels:
+    app: pharos-snapshot
+spec:
+  template:
+    metadata:
+      labels:
+        app: pharos-snapshot
+    spec:
+      {{- if .Values.taints }}
+      {{- if .Values.taints.enabled }}
+      tolerations:
+      - key: {{ .Values.taints.key }}
+        operator: {{ default "Exists" .Values.taints.operator }}
+        {{- if .Values.taints.value }}
+        value: {{ .Values.taints.value }}
+        {{- end }}
+        effect: {{ default "NoSchedule" .Values.taints.effect }}
+      {{- end }}
+      {{- end }}
+        {{- if .Values.nodeSelector }}
+      nodeSelector:
+        {{- include "pharos.tplvalues.render" ( dict "value" .Values.nodeSelector "context" $ ) | nindent 8 }}
+        {{- end }}
+      restartPolicy: Never
+      containers:
+      - name: snapshot-helper
+        image: ubuntu:latest
+        workingDir: /data
+        env:
+        - name: SNAPSHOT_URL
+          value: "{{ .Values.snapshot.url }}"
+        - name: DATA_DIR
+          value: "{{ .Values.snapshot.dataDir }}"
+        - name: SKIP_DOWNLOAD
+          value: "{{ .Values.snapshot.skipDownload | default "false" }}"
+        command:
+        - /bin/bash
+        - -c
+        - |
+          set -e
+          apt-get update
+          apt-get install -y wget tar gzip
+          echo "Removing previous extraction (if any)..."
+          rm -rf public/ "$DATA_DIR"
+
+          if [ "$SKIP_DOWNLOAD" = "true" ]; then
+            echo "Skipping snapshot download as requested. Using existing snapshot.tar.gz"
+          else
+            echo "Downloading snapshot..."
+            wget "$SNAPSHOT_URL" -O snapshot.tar.gz
+          fi
+
+          echo "Extracting snapshot..."
+          tar -zxvf snapshot.tar.gz
+
+          echo "Moving extracted data to $DATA_DIR..."
+          mv public "$DATA_DIR"
+
+          echo "Snapshot process complete. Job will now exit."
+
+        volumeMounts:
+        - name: pharos-data
+          mountPath: /data
+        resources:
+          requests:
+            memory: "8Gi"
+            cpu: "2"
+          limits:
+            memory: "16Gi"
+            cpu: "4"
+      volumes:
+      - name: pharos-data
+        persistentVolumeClaim:
+          claimName: pharos-data-{{ include "pharos.name" $ | lower }}-0
+      terminationGracePeriodSeconds: 30
+{{- end }}
