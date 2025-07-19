@@ -36,7 +36,7 @@ This Helm chart deploys the Pharos node using a Kubernetes StatefulSet and Servi
 1. **Clone the repository or copy the chart directory:**
 
    ```sh
-   git clone <repo-url>
+   git clone https://github.com/lithiumdigital/pharos.git pharos
    cd pharos
    ```
 
@@ -51,6 +51,24 @@ This Helm chart deploys the Pharos node using a Kubernetes StatefulSet and Servi
    ```
 
    Replace `<release-name>` with your desired Helm release name.
+
+---
+
+## Alternative Installation with Custom Values
+
+You can add the helm chart to your local Helm repository and install it with custom values:
+
+```sh
+helm repo add pharos https://lithiumdigital.github.io/pharos
+
+helm repo update
+```
+
+Then install the chart with custom values:
+
+```sh
+helm install pharos-demo pharos/pharos -f values.yaml
+```
 
 ---
 
@@ -107,6 +125,7 @@ All configurable parameters are defined in values.yaml. You can override any val
 | `customLabels`                  | Additional custom labels for resources                      | `{}`                                         |
 | `snapshot.enabled`              | Enable the snapshot restore job (Helm hook)                 | `false`                                      |
 | `snapshot.url`                  | URL to the snapshot archive                                 | `""`                                         |
+| `snapshot.skipDownload`         | Skip downloading the snapshot archive                       | `false`                                      |
 | `snapshot.dataDir`              | Path to the data directory inside the container             | `/data/pharos-node/domain/light/data/public` |
 | `monitoring.enabled`            | Enable monitoring                                            | `false`                                      |
 | `monitoring.confPath`           | Path to monitoring config file                              | `/data/pharos-node/domain/light/conf/monitor.conf` |
@@ -226,6 +245,8 @@ env:
     value: "{{ .Values.snapshot.url }}"
   - name: DATA_DIR
     value: "{{ .Values.snapshot.dataDir }}"
+  - name: SKIP_DOWNLOAD
+    value: "{{ .Values.snapshot.skipDownload | default 'false' }}"
 ```
 
 You can customize the snapshot URL and data directory via `values.yaml` or `--set` as shown above.
@@ -350,41 +371,6 @@ kubectl delete pvc -l app.kubernetes.io/instance=<release-name> -n <namespace>
 
 - `certmanager/certificate.yaml`: Defines the TLS certificate resource.
 - `certmanager/clusterissuer.yaml`: Defines the ACME ClusterIssuer used to sign the certificate.
-
-
----
-
-## Example values.yaml
-
-```yaml
-
-
-image:
-  repository: public.ecr.aws/k2g7b7g1/pharos/testnet
-  tag: "rpc_community_0629"
-  pullPolicy: IfNotPresent
-
-resources:
-  requests:
-    cpu: "8"
-    memory: "16Gi"
-  limits:
-    cpu: "16"
-    memory: "32Gi"
-
-persistence:
-  storageClass: "standard"
-  accessModes:
-    - ReadWriteOnce
-  size: 2000Gi
-
-customLabels: {}
-
-snapshot:
-  enabled: false
-  url: ""
-  dataDir: "/data/pharos-node/domain/light/data/public"
-```
 
 ---
 
