@@ -54,7 +54,7 @@ This Helm chart deploys the Pharos node using a Kubernetes StatefulSet and Servi
 
 ---
 
-## Alternative Installation with Custom Values
+## Alternative Installation
 
 You can add the helm chart to your local Helm repository and install it with custom values:
 
@@ -67,7 +67,7 @@ helm repo update
 Then install the chart with custom values:
 
 ```sh
-helm install pharos-demo pharos/pharos -f values.yaml
+helm install pharos-demo pharos/pharos-node -f values.yaml
 ```
 
 ---
