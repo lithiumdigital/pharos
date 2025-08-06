@@ -1,0 +1,11 @@
+- name: Reload systemd daemon
+  systemd:
+    daemon_reload: yes
+  become: true
+
+- name: Enable and start pharos service
+  systemd:
+    name: "{{ network }}"
+    enabled: yes
+    state: started
+  become: true

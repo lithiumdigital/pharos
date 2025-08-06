@@ -1,0 +1,5 @@
+- name: Install pharos {{ type }} node
+  hosts: '{{ target }}'
+  become: true
+  roles:
+    - role: setup

@@ -1,0 +1,162 @@
+---
+- name: Create pharos directory
+  file:
+    path: "/data/{{ workspace }}"
+    state: directory
+
+- name: Create conf directory
+  file:
+    path: "/data/{{ workspace }}/conf"
+    state: directory
+    mode: '0755'
+
+- name: Download pharos binary
+  get_url:
+    url: "{{ binary }}"
+    dest: "/data/{{ workspace }}/{{ binary | basename }}"
+    mode: '0644'
+
+- name: Extract pharos binary
+  unarchive:
+    src: "/data/{{ workspace }}/{{ binary | basename }}"
+    dest: "/data/{{ workspace }}"
+    remote_src: yes
+
+- name: Remove existing genesis configuration file if present
+  file:
+    path: "/data/{{ workspace }}/genesis.conf"
+    state: absent
+
+- name: Download genesis configuration file
+  get_url:
+    url: "https://raw.githubusercontent.com/PharosNetwork/resources/refs/heads/main/{{ type }}/genesis.conf"
+    dest: "/data/{{ workspace }}/genesis.conf"
+    mode: '0644'
+
+- name: Remove existing configuration files if present
+  file:
+    path: "/data/{{ workspace }}/conf/{{ item }}"
+    state: absent
+  loop:
+    - compute.conf
+    - controller.conf
+    - cubenet.conf
+    - dog.conf
+    - global.conf
+    - mygrid.conf.json
+    - portal.conf
+    - txpool.conf
+
+- name: Download configuration files
+  get_url:
+    url: "https://raw.githubusercontent.com/PharosNetwork/resources/refs/heads/main/{{ type }}/{{ spec }}/conf/{{ item }}"
+    dest: "/data/{{ workspace }}/conf/{{ item }}"
+    mode: '0644'
+  loop:
+    - compute.conf
+    - controller.conf
+    - cubenet.conf
+    - dog.conf
+    - global.conf
+    - mygrid.conf.json
+    - portal.conf
+    - txpool.conf
+
+- name: Make install scripts executable
+  file:
+    path: "/data/{{ workspace }}/scripts/{{ item }}"
+    mode: '0755'
+  loop:
+    - install_ops.sh
+    - ops_prepare.sh
+
+- name: Run pharos CLI installation
+  command: ./install_ops.sh
+  args:
+    chdir: "/data/{{ workspace }}/scripts"
+    # creates: "/data/.local/bin/pharos"
+
+- name: Get public IP address if not set manually
+  ansible.builtin.command: curl -s ifconfig.me/ip
+  register: public_ip_result
+  when: pharos_ip is not defined
+
+- name: print public IP address
+  debug:
+    msg: "Public IP address is {{ public_ip_result.stdout  | trim }}"
+
+# - name: Use alias inline to set public IP
+#   shell: |
+#     alias pharos='~/.local/bin/pipenv run pharos'
+#     ~/.local/bin/pipenv run pharos set-ip {{ pharos_ip | default(public_ip_result.stdout | trim) }}
+#   args:
+#     executable: /bin/bash
+
+
+- name: Set public IP for pharos node
+  command: "~/.local/bin/pipenv run pharos set-ip {{ pharos_ip | default(public_ip_result.stdout | trim) }}"
+  args:
+    chdir: "/data/{{ workspace }}/scripts"
+  # environment:
+  #   PATH: "/data/.local/bin"
+
+- name: Generate deploy configuration
+  command: "~/.local/bin/pipenv run pharos generate deploy.light.json"
+  args:
+    chdir: "/data/{{ workspace }}/scripts"
+  # environment:
+  #   PATH: "/data/.local/bin"
+
+- name: Deploy pharos domain
+  command: "~/.local/bin/pipenv run pharos deploy domain0.json"
+  args:
+    chdir: "/data/{{ workspace }}/scripts"
+  # environment:
+  #   PATH: "/data/.local/bin"
+
+- name: Bootstrap pharos domain
+  command: "~/.local/bin/pipenv run pharos bootstrap domain0.json"
+  args:
+    chdir: "/data/{{ workspace }}/scripts"
+  # environment:
+  #   PATH: "/data/.local/bin"
+
+- name: Copy libevmone.so to libevmone.so.0.15
+  copy:
+    remote_src: yes
+    src: /data/pharos-node/domain0/bin/libevmone.so
+    dest: /data/pharos-node/domain0/bin/libevmone.so.0.15
+    mode: '0755'
+
+- name: Ensure nofile soft limit is set for root
+  lineinfile:
+    path: /etc/security/limits.conf
+    line: 'root soft nofile 65536'
+    state: present
+
+- name: Ensure nofile hard limit is set for root
+  lineinfile:
+    path: /etc/security/limits.conf
+    line: 'root hard nofile 65536'
+    state: present
+  
+- name: Ensure LD_LIBRARY_PATH is exported in .bashrc
+  lineinfile:
+    path: /root/.bashrc
+    line: 'export LD_LIBRARY_PATH="/data/pharos-node/domain0/bin:$LD_LIBRARY_PATH"'
+    insertafter: EOF
+
+- name: Source .bashrc for current session
+  shell: source /root/.bashrc
+  args:
+    executable: /bin/bash
+
+- name: Create systemd service file
+  template:
+    src: pharos.service.j2
+    dest: "/etc/systemd/system/{{ network }}.service"
+    mode: '0644'
+  become: true
+  notify:
+    - Reload systemd daemon
+    - Enable and start pharos service

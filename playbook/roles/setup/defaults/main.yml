@@ -1,0 +1,16 @@
+# Network type: testnet or mainnet
+type: testnet
+
+workspace: pharos-testnet
+
+# Hardware specification (e.g., 64c512g)
+spec: 64c512g
+
+# Binary download URL - direct download link
+binary: "https://github.com/PharosNetwork/resources/releases/download/pharos-v0.1.1/pharos-v0.1.1.tar.gz"
+
+# Daemon executable name
+daemon: pharos
+
+# Network service name for systemd
+network: pharos
